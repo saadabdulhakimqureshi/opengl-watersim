@@ -27,7 +27,7 @@ find_package(OpenGL REQUIRED)
 if (WIN32)
 	set(LIBS glfw opengl32 glad)
 elseif (UNIX)
-	set(LIBS glfw GL glad)
+	set(LIBS glfw OpenGL::GL glad)
 endif ()
 
 # Variables for Paths of External Libraries
@@ -62,7 +62,7 @@ target_include_directories(${PROJECT_NAME}
 
 target_link_directories(${PROJECT_NAME} 
 	PRIVATE ${GLFW_ROOT_DIR}/src
-	PRIVATE ${GLAD_ROOT_DIR}/src}
+	PRIVATE ${GLAD_ROOT_DIR}/src
 )
 
 # Add the Libs to the Linker for the Project
