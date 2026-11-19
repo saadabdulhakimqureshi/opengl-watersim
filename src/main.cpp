@@ -6,6 +6,10 @@
 
 #include <iostream>
 
+#include "camera.h"
+
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 void processInput(GLFWwindow *window);
@@ -16,21 +20,34 @@ const unsigned int SCR_HEIGHT = 600;
 
 // Vertex and Fragment Shader (inline)
 // Ideally, these will be in their own glsl files.
-const char *vertexShaderSource = "#version 330 core\n"
-	"layout (location = 0) in vec3 aPos;\n"
-	"void main()\n"
-	"{\n"
-	"	gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
-	"}\0";
+const char *vertexShaderSource = R"(
+	#version 330 core
 
-const char *fragmentShaderSource = "#version 330 core\n"
-	"out vec4 FragColor;\n"
-	"void main()\n"
-	"{\n"
-	"	FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
-	"}\0";
+	layout (location = 0) in vec3 aPos;
 
-int main() {
+	uniform mat4 model;
+	uniform mat4 view;
+	uniform mat4 projection;
+
+	void main()
+	{
+		gl_Position = projection * view * model * vec4(aPos, 1.0);
+	}
+)";
+
+const char *fragmentShaderSource = R"(
+#version 330 core
+
+out vec4 FragColor;
+
+void main()
+{
+    FragColor = vec4(1.0, 0.5, 0.2, 1.0);
+}
+)";
+
+int main()
+{
 	// glfw: initialize and configure
 	// ------------------------------
 	glfwInit();
@@ -45,7 +62,8 @@ int main() {
 	// glfw window creation
 	// --------------------
 	GLFWwindow *window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "LearnOpenGL", NULL, NULL);
-	if (window == NULL) {
+	if (window == NULL)
+	{
 		std::cout << "Failed to create GLFW window" << std::endl;
 		glfwTerminate();
 		return -1;
@@ -55,7 +73,8 @@ int main() {
 
 	// glad: load all OpenGL function pointers
 	// ---------------------------------------
-	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+	{
 		std::cout << "Failed to initialize GLAD" << std::endl;
 		return -1;
 	}
@@ -73,10 +92,11 @@ int main() {
 
 	// Checking for vertex shader compilation errors
 	glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-	if(!success)
+	if (!success)
 	{
-		glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-		std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
+		glGetShaderInfoLog(vertexShader, 512, nullptr, infoLog);
+		std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n"
+				  << infoLog << std::endl;
 	}
 
 	// build the fragment shader
@@ -87,10 +107,11 @@ int main() {
 
 	// Checking for fragment shader compilation errors
 	glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-	if(!success)
+	if (!success)
 	{
-		glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
-		std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
+		glGetShaderInfoLog(fragmentShader, 512, nullptr, infoLog);
+		std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n"
+				  << infoLog << std::endl;
 	}
 
 	// Shader Program
@@ -103,23 +124,22 @@ int main() {
 
 	// Checking for linking errors
 	glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-	if(!success)
+	if (!success)
 	{
-		glGetShaderInfoLog(shaderProgram, 512, NULL, infoLog);
-		std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
+		glGetProgramInfoLog(shaderProgram, 512, nullptr, infoLog);
+		std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n"
+				  << infoLog << std::endl;
 	}
 
 	// housekeeping
 	glDeleteShader(vertexShader);
 	glDeleteShader(fragmentShader);
 
-
 	// The triangle(s)
 	float vertices[] = {
 		-0.5f, -0.5f, 0.0f,
 		0.5f, -0.5f, 0.0f,
-		0.0f, 0.5f, 0.0f
-	};
+		0.0f, 0.5f, 0.0f};
 
 	// Where the magic happens
 	// 1. Establish VBO and VAO Put vertices into buffer for OpenGL
@@ -137,39 +157,89 @@ int main() {
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-	// 2. set vertex attributes 
+	// 2. set vertex attributes
 	// Vertex attributes in the vertex buffer
 	// glVertexAttribPointer( location of vertex attribute , size of vertex attribute (vec3), type of data, stride, weird typecasting stuff)
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(0); 
-	
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
+	glEnableVertexAttribArray(0);
+
 	// Not entirely understanding the importance of these from the learnopengl code
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
 
+	// Camera related code /
+	Camera camera;
+
+	const glm::mat4 model{1.0f};
+
+	const GLint modelLocation =
+		glGetUniformLocation(shaderProgram, "model");
+
+	const GLint viewLocation =
+		glGetUniformLocation(shaderProgram, "view");
+
+	const GLint projectionLocation =
+		glGetUniformLocation(shaderProgram, "projection");
+
+	glEnable(GL_DEPTH_TEST);
 
 	// render loop
 	// -----------
-	while (!glfwWindowShouldClose(window)) {
-		// input
-		// -----
-		processInput(window);
+	while (!glfwWindowShouldClose(window))
+	{
+		glfwPollEvents();
 
-		// render
-		// ------
+		processInput(window);
+		if (glfwWindowShouldClose(window))
+			break;
+
+		int framebufferWidth;
+		int framebufferHeight;
+
+		glfwGetFramebufferSize(
+			window,
+			&framebufferWidth,
+			&framebufferHeight);
+
+		// for window minimizing
+		if (framebufferWidth <= 0 || framebufferHeight <= 0)
+		{
+			glfwWaitEventsTimeout(0.05);
+			continue;
+		}
+
+		glViewport(0, 0, framebufferWidth, framebufferHeight);
+
+		const float aspectRatio =
+			static_cast<float>(framebufferWidth) /
+			static_cast<float>(framebufferHeight);
+
+		const glm::mat4 view = camera.getViewMatrix();
+
+		const glm::mat4 projection = glm::perspective(
+			glm::radians(45.0f),
+			aspectRatio,
+			0.1f,
+			100.0f);
+
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT);
-		
-		// 3. Use the shader program
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
 		glUseProgram(shaderProgram);
+
+		glUniformMatrix4fv(
+			modelLocation, 1, GL_FALSE, glm::value_ptr(model));
+
+		glUniformMatrix4fv(
+			viewLocation, 1, GL_FALSE, glm::value_ptr(view));
+
+		glUniformMatrix4fv(
+			projectionLocation, 1, GL_FALSE, glm::value_ptr(projection));
+
 		glBindVertexArray(VAO);
 		glDrawArrays(GL_TRIANGLES, 0, 3);
 
-
-		// glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
-		// -------------------------------------------------------------------------------
 		glfwSwapBuffers(window);
-		glfwPollEvents();
 	}
 
 	// more housekeeping
@@ -185,14 +255,16 @@ int main() {
 
 // process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
 // ---------------------------------------------------------------------------------------------------------
-void processInput(GLFWwindow *window) {
+void processInput(GLFWwindow *window)
+{
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
 // ---------------------------------------------------------------------------------------------
-void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
+void framebuffer_size_callback(GLFWwindow *window, int width, int height)
+{
 	// make sure the viewport matches the new window dimensions; note that width and
 	// height will be significantly larger than specified on retina displays.
 	glViewport(0, 0, width, height);
