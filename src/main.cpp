@@ -12,7 +12,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
-void processInput(GLFWwindow *window);
+void processInput(GLFWwindow *window, Camera &camera, float deltaTime);
 
 // settings
 const unsigned int SCR_WIDTH = 800;
@@ -183,13 +183,19 @@ int main()
 
 	glEnable(GL_DEPTH_TEST);
 
+	double lastFrame = glfwGetTime();
 	// render loop
 	// -----------
 	while (!glfwWindowShouldClose(window))
 	{
+
 		glfwPollEvents();
 
-		processInput(window);
+		const double currentFrame = glfwGetTime();
+		const float deltaTime = static_cast<float>(currentFrame - lastFrame);
+		lastFrame = currentFrame;
+
+		processInput(window, camera, deltaTime);
 		if (glfwWindowShouldClose(window))
 			break;
 
@@ -201,14 +207,14 @@ int main()
 			&framebufferWidth,
 			&framebufferHeight);
 
-		// for window minimizing
+		// for window minimizing // prevents division by zero
 		if (framebufferWidth <= 0 || framebufferHeight <= 0)
 		{
-			glfwWaitEventsTimeout(0.05);
+			glfwWaitEventsTimeout(0.05); // skip iterations when minimized
 			continue;
 		}
 
-		glViewport(0, 0, framebufferWidth, framebufferHeight);
+		glViewport(0, 0, framebufferWidth, framebufferHeight); // sets pixel drawing area
 
 		const float aspectRatio =
 			static_cast<float>(framebufferWidth) /
@@ -216,8 +222,9 @@ int main()
 
 		const glm::mat4 view = camera.getViewMatrix();
 
+		// creating perspective projection
 		const glm::mat4 projection = glm::perspective(
-			glm::radians(45.0f),
+			glm::radians(45.0f), // fov
 			aspectRatio,
 			0.1f,
 			100.0f);
@@ -255,10 +262,55 @@ int main()
 
 // process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
 // ---------------------------------------------------------------------------------------------------------
-void processInput(GLFWwindow *window)
+void processInput(GLFWwindow *window, Camera &camera, float deltaTime)
 {
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
+
+	// look around
+	static bool firstMouse = true;
+	static double lastX = 0.0;
+	static double lastY = 0.0;
+
+	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) != GLFW_PRESS)
+	{
+		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+		firstMouse = true;
+		return;
+	}
+
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+	double xpos, ypos;
+	glfwGetCursorPos(window, &xpos, &ypos);
+
+	if (firstMouse)
+	{
+		lastX = xpos;
+		lastY = ypos;
+		firstMouse = false;
+	}
+
+	const float xoffset = static_cast<float>(xpos - lastX);
+	const float yoffset = static_cast<float>(lastY - ypos);
+
+	lastX = xpos;
+	lastY = ypos;
+
+	camera.rotate(xoffset, yoffset);
+
+	// walking around
+	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+		camera.move(glm::vec3(0.0f, 0.0f, 1.0f), deltaTime);
+
+	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+		camera.move(glm::vec3(0.0f, 0.0f, -1.0f), deltaTime);
+
+	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+		camera.move(glm::vec3(-1.0f, 0.0f, 0.0f), deltaTime);
+
+	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+		camera.move(glm::vec3(1.0f, 0.0f, 0.0f), deltaTime);
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
