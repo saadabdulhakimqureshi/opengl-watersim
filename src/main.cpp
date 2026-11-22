@@ -267,6 +267,19 @@ void processInput(GLFWwindow *window, Camera &camera, float deltaTime)
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
 
+	// walking around
+	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+		camera.move(glm::vec3(0.0f, 0.0f, 1.0f), deltaTime);
+
+	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+		camera.move(glm::vec3(0.0f, 0.0f, -1.0f), deltaTime);
+
+	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+		camera.move(glm::vec3(-1.0f, 0.0f, 0.0f), deltaTime);
+
+	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+		camera.move(glm::vec3(1.0f, 0.0f, 0.0f), deltaTime);
+
 	// look around
 	static bool firstMouse = true;
 	static double lastX = 0.0;
@@ -298,19 +311,6 @@ void processInput(GLFWwindow *window, Camera &camera, float deltaTime)
 	lastY = ypos;
 
 	camera.rotate(xoffset, yoffset);
-
-	// walking around
-	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-		camera.move(glm::vec3(0.0f, 0.0f, 1.0f), deltaTime);
-
-	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-		camera.move(glm::vec3(0.0f, 0.0f, -1.0f), deltaTime);
-
-	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-		camera.move(glm::vec3(-1.0f, 0.0f, 0.0f), deltaTime);
-
-	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-		camera.move(glm::vec3(1.0f, 0.0f, 0.0f), deltaTime);
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
