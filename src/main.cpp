@@ -7,44 +7,41 @@
 #include <iostream>
 
 #include "camera.h"
+#include "cube.h"
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+// for reading in shader files
+#include <fstream>
+#include <sstream>
+#include <stdexcept>
+#include <string> // string makes it easier to read in
+
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
-void processInput(GLFWwindow *window, Camera &camera, float deltaTime);
+void processInput(GLFWwindow *window, Camera &camera, float deltaTime, glm::vec3& cursorPosition);
 
 // settings
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 
-// Vertex and Fragment Shader (inline)
-// Ideally, these will be in their own glsl files.
-const char *vertexShaderSource = R"(
-	#version 330 core
-
-	layout (location = 0) in vec3 aPos;
-
-	uniform mat4 model;
-	uniform mat4 view;
-	uniform mat4 projection;
-
-	void main()
-	{
-		gl_Position = projection * view * model * vec4(aPos, 1.0);
-	}
-)";
-
-const char *fragmentShaderSource = R"(
-#version 330 core
-
-out vec4 FragColor;
-
-void main()
+// for reading Vertex and Fragment Shaders
+std::string readShaderFile(const char* path)
 {
-    FragColor = vec4(1.0, 0.5, 0.2, 1.0);
+    std::ifstream file(path);
+
+    if (!file.is_open())
+    {
+        throw std::runtime_error(
+            std::string("Failure to open shader file: ") + path
+        );
+    }
+
+    std::ostringstream contents;
+    contents << file.rdbuf();
+
+    return contents.str();
 }
-)";
 
 int main()
 {
@@ -80,6 +77,24 @@ int main()
 	}
 
 	// -- Building Shaders --
+	// read shader files
+	std::string vertexShaderCode;
+	std::string fragmentShaderCode;
+	try
+	{
+		vertexShaderCode = readShaderFile("shaders/shader.vert");
+		fragmentShaderCode = readShaderFile("shaders/shader.frag");
+	}
+	catch (const std::exception& error)
+	{
+		std::cerr << error.what() << std::endl;
+		glfwDestroyWindow(window);
+		glfwTerminate();
+		return -1;
+	}
+	const char* vertexShaderSource = vertexShaderCode.c_str();
+	const char* fragmentShaderSource = fragmentShaderCode.c_str();
+
 	// build the vertex shader
 	unsigned int vertexShader;
 	vertexShader = glCreateShader(GL_VERTEX_SHADER);
@@ -170,6 +185,20 @@ int main()
 	// Camera related code /
 	Camera camera;
 
+	// Cursor related code
+	glm::vec3 cursorPosition(0.0f, 0.0f, 1.0f);
+	const float cursorVertex[] = {0.0f, 0.0f, 0.0f};
+	unsigned int cursorVAO, cursorVBO;
+	glGenVertexArrays(1, &cursorVAO);
+	glGenBuffers(1, &cursorVBO);
+	glBindVertexArray(cursorVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, cursorVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(cursorVertex), cursorVertex, GL_STATIC_DRAW);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
+	glEnableVertexAttribArray(0);
+	glBindVertexArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
 	const glm::mat4 model{1.0f};
 
 	const GLint modelLocation =
@@ -181,7 +210,12 @@ int main()
 	const GLint projectionLocation =
 		glGetUniformLocation(shaderProgram, "projection");
 
+	const GLint colorLocation =
+    	glGetUniformLocation(shaderProgram, "objectColor");
+
 	glEnable(GL_DEPTH_TEST);
+
+	initializeCubes();
 
 	double lastFrame = glfwGetTime();
 	// render loop
@@ -195,7 +229,7 @@ int main()
 		const float deltaTime = static_cast<float>(currentFrame - lastFrame);
 		lastFrame = currentFrame;
 
-		processInput(window, camera, deltaTime);
+		processInput(window, camera, deltaTime, cursorPosition);
 		if (glfwWindowShouldClose(window))
 			break;
 
@@ -243,8 +277,21 @@ int main()
 		glUniformMatrix4fv(
 			projectionLocation, 1, GL_FALSE, glm::value_ptr(projection));
 
+		// draw triangle
+		glUniform3f(colorLocation, 1.0f, 0.5f, 0.2f);
 		glBindVertexArray(VAO);
 		glDrawArrays(GL_TRIANGLES, 0, 3);
+
+		// draw cubes
+		drawCubes(shaderProgram);
+
+		// draw cursor
+		const glm::mat4 cursorModel = glm::translate(glm::mat4(1.0f), cursorPosition);
+		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(cursorModel));
+		glUniform3f(colorLocation, 1.0f, 0.0f, 0.0f);
+		glPointSize(10.0f);
+		glBindVertexArray(cursorVAO);
+		glDrawArrays(GL_POINTS, 0, 1);
 
 		glfwSwapBuffers(window);
 	}
@@ -253,6 +300,9 @@ int main()
 	glDeleteVertexArrays(1, &VAO);
 	glDeleteBuffers(1, &VBO);
 	glDeleteProgram(shaderProgram);
+	glDeleteVertexArrays(1, &cursorVAO);
+	glDeleteBuffers(1, &cursorVBO);
+	cleanupCubes();
 
 	// glfw: terminate, clearing all previously allocated GLFW resources.
 	// ------------------------------------------------------------------
@@ -262,11 +312,12 @@ int main()
 
 // process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
 // ---------------------------------------------------------------------------------------------------------
-void processInput(GLFWwindow *window, Camera &camera, float deltaTime)
+void processInput(GLFWwindow *window, Camera &camera, float deltaTime, glm::vec3& cursorPosition)
 {
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
 
+	// camera movement
 	// walking around
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
 		camera.move(glm::vec3(0.0f, 0.0f, 1.0f), deltaTime);
@@ -279,6 +330,42 @@ void processInput(GLFWwindow *window, Camera &camera, float deltaTime)
 
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
 		camera.move(glm::vec3(1.0f, 0.0f, 0.0f), deltaTime);
+
+	// cursor movement
+    glm::vec3 cursorMovement(0.0f);
+	const float cursorSpeed = 1.0f;
+
+	if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS)
+        cursorMovement.x -= 1.0f;
+
+    if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS)
+        cursorMovement.x += 1.0f;
+
+	if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS)
+        cursorMovement.y -= 1.0f;
+
+    if (glfwGetKey(window, GLFW_KEY_I) == GLFW_PRESS)
+        cursorMovement.y += 1.0f;
+
+    if (glfwGetKey(window, GLFW_KEY_H) == GLFW_PRESS)
+        cursorMovement.z -= 1.0f;
+
+    if (glfwGetKey(window, GLFW_KEY_Y) == GLFW_PRESS)
+        cursorMovement.z += 1.0f;
+
+    if (glm::length(cursorMovement) > 0.0f)
+    {
+        cursorPosition += glm::normalize(cursorMovement) * cursorSpeed * deltaTime;
+    }
+
+	// spawn cube on p
+	static bool pWasPressed = false; // static allows the bool is change and not reset on each processInput call
+	const bool pIsPressed = glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS;
+	if (pIsPressed && !pWasPressed)
+	{
+		spawnCube(cursorPosition);
+	}
+	pWasPressed = pIsPressed;
 
 	// look around
 	static bool firstMouse = true;
