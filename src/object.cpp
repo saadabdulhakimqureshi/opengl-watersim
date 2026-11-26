@@ -65,8 +65,10 @@ void Object::drawObject(unsigned int shaderProgram) const
     glBindVertexArray(0);
 }
 
-void Object::update(float deltaTime)
+void Object::update(float deltaTime, float g)
 {
+    position.y += velocity.y * deltaTime - 0.5f * g * deltaTime * deltaTime;
+    velocity.y -= g * deltaTime;
 }
 
 void Object::cleanupMesh()

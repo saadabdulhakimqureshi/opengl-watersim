@@ -8,6 +8,8 @@
 namespace
 {
     std::vector<std::unique_ptr<Object>> objects;
+
+    float gravity = 9.81;
 }
 
 void spawnCube(const glm::vec3 &position)
@@ -23,11 +25,11 @@ void drawObjects(unsigned int shaderProgram)
     }
 }
 
-void updateObject(float deltaTime)
+void updateObjects(float deltaTime)
 {
     for (const auto &object : objects)
     {
-        object->update(deltaTime);
+        object->update(deltaTime, gravity);
     }
 }
 

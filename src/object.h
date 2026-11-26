@@ -15,11 +15,16 @@ public:
     void cleanupMesh();
 
     virtual void drawObject(unsigned int shaderProgram) const;
-    virtual void update(float deltaTime);
+    virtual void update(float deltaTime, float g);
 
     const glm::vec3 &getPosition() const
     {
         return position;
+    }
+
+    const glm::vec3 &getVelocity() const
+    {
+        return velocity;
     }
 
 protected:
@@ -28,8 +33,10 @@ protected:
     void initializeMesh(const float *vertices, int vertexCount);
 
     glm::vec3 position{0.0f};
+    glm::vec3 velocity{0.0f};
     glm::vec3 scale{1.0f};
     glm::vec3 color{1.0f};
+    glm::float32 mass{10};
 
 private:
     unsigned int VAO = 0;
