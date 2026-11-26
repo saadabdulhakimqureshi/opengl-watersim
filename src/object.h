@@ -34,9 +34,10 @@ protected:
 
     glm::vec3 position{0.0f};
     glm::vec3 velocity{0.0f};
+    glm::vec3 acceleration{0.0f};
     glm::vec3 scale{1.0f};
     glm::vec3 color{1.0f};
-    glm::float32 mass{10};
+    glm::float32 mass{1};
 
 private:
     unsigned int VAO = 0;
