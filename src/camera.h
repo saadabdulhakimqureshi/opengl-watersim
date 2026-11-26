@@ -11,6 +11,16 @@ public:
     void move(const glm::vec3 position, float deltaTime);
     void rotate(float xoffset, float yoffset);
 
+    const glm::vec3 &getPosition() const
+    {
+        return position;
+    }
+
+    const glm::vec3 &getForward() const
+    {
+        return forward;
+    }
+
 private:
     // translation
     glm::vec3 getRight() const
