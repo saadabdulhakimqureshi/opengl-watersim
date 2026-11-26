@@ -67,8 +67,8 @@ void Object::drawObject(unsigned int shaderProgram) const
 
 void Object::update(float deltaTime, float g)
 {
-    acceleration.y = g * deltaTime;
-    position += velocity * deltaTime - 0.5f * acceleration * deltaTime;
+    acceleration.y = mass * g * deltaTime;
+    position += velocity * deltaTime - acceleration * deltaTime;
     velocity -= acceleration;
 }
 
