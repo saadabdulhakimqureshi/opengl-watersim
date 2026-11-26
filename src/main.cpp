@@ -215,6 +215,16 @@ int main()
 	glEnable(GL_DEPTH_TEST);
 
 	double lastFrame = glfwGetTime();
+
+	// temporary
+	Cube *floor = spawnCube(glm::vec3(0.0f, -2.0f, 0.0f));
+
+	if (floor)
+	{
+		floor->setScale(glm::vec3(10.0f, 1.0f, 10.0f));
+		floor->setMass(0.0f);
+		floor->setColor(glm::vec3(1.0f));
+	}
 	// render loop
 	// -----------
 	while (!glfwWindowShouldClose(window))
@@ -315,13 +325,16 @@ void processInput(GLFWwindow *window, Camera &camera, float deltaTime, glm::vec3
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
 
-	// force
-	if (glfwGetKey(window, GLFW_KEY_F))
+	// spawn cube on p
+	static bool fWasPressed = false; // static allows the bool is change and not reset on each processInput call
+	const bool fIsPressed = glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS;
+	if (fIsPressed && !fWasPressed)
 	{
 		Cube *cube = spawnCube(camera.getPosition() + camera.getForward() * 1.0f);
-		applyForceToObject(*cube, camera.getForward(), 1.0f, deltaTime);
+		applyForceToObject(*cube, camera.getForward(), 100.0f, deltaTime);
 	}
 
+	fWasPressed = fIsPressed;
 	// camera movement
 	// walking around
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)

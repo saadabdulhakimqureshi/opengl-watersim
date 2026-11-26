@@ -1,6 +1,7 @@
 #pragma once
 
 #include <glm/glm.hpp>
+#include "boundingRegion.h"
 
 class Object
 {
@@ -18,6 +19,9 @@ public:
 
     // rigidbody
     virtual void update(float deltaTime, glm::vec3 g);
+    float getInverseMass() const;
+    void applyImpulse(const glm::vec3 &impulse);
+
     virtual void applyForce(glm::vec3 force, float deltaTime);
     virtual void applyForce(glm::vec3 direction, float magnitude, float deltaTime);
     virtual void applyAcceleration(glm::vec3 acceleration);
@@ -44,6 +48,23 @@ public:
         return mass;
     }
 
+    BoundingRegion getBoundingRegion() const;
+
+    void setScale(const glm::vec3 &scale)
+    {
+        this->scale = scale;
+    }
+
+    void setMass(float mass)
+    {
+        this->mass = mass;
+    }
+
+    void setColor(const glm::vec3 &color)
+    {
+        this->color = color;
+    }
+
 protected:
     Object() = default;
 
@@ -59,7 +80,10 @@ protected:
     // rigid body
     glm::vec3 velocity{0.0f};
     glm::vec3 acceleration{0.0f};
+    glm::vec3 pendingAcceleration{0.0f};
     glm::float32 mass{0.1};
+
+    BoundingRegion localBounds;
 
 private:
     unsigned int VAO = 0;
