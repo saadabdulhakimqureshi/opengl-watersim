@@ -15,7 +15,7 @@ public:
     void cleanupMesh();
 
     virtual void drawObject(unsigned int shaderProgram) const;
-    virtual void update(float deltaTime, float g);
+    virtual void update(float deltaTime, glm::vec3 g);
 
     const glm::vec3 &getPosition() const
     {
@@ -32,11 +32,16 @@ protected:
 
     void initializeMesh(const float *vertices, int vertexCount);
 
+    // transform
     glm::vec3 position{0.0f};
+    glm::vec3 scale{1.0f};
+
+    // visual
+    glm::vec3 color{1.0f};
+
+    // rigid body
     glm::vec3 velocity{0.0f};
     glm::vec3 acceleration{0.0f};
-    glm::vec3 scale{1.0f};
-    glm::vec3 color{1.0f};
     glm::float32 mass{1};
 
 private:

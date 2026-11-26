@@ -65,9 +65,9 @@ void Object::drawObject(unsigned int shaderProgram) const
     glBindVertexArray(0);
 }
 
-void Object::update(float deltaTime, float g)
+void Object::update(float deltaTime, glm::vec3 g)
 {
-    acceleration.y = mass * g * deltaTime;
+    acceleration = mass * g * deltaTime;
     position += velocity * deltaTime - acceleration * deltaTime;
     velocity -= acceleration;
 }
