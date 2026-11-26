@@ -281,7 +281,7 @@ int main()
 		glDrawArrays(GL_TRIANGLES, 0, 3);
 
 		// draw cubes
-		drawCubes(shaderProgram);
+		drawObjects(shaderProgram);
 
 		// draw cursor
 		const glm::mat4 cursorModel = glm::translate(glm::mat4(1.0f), cursorPosition);
@@ -300,7 +300,7 @@ int main()
 	glDeleteProgram(shaderProgram);
 	glDeleteVertexArrays(1, &cursorVAO);
 	glDeleteBuffers(1, &cursorVBO);
-	cleanupCubes();
+	cleanupObjects();
 
 	// glfw: terminate, clearing all previously allocated GLFW resources.
 	// ------------------------------------------------------------------

@@ -2,52 +2,47 @@
 #include "cube.h"
 
 #include <iostream>
+#include <memory>
 #include <vector>
 
 namespace
 {
-    std::vector<Cube> cubes;
-}
-
-void initializeCubes()
-{
-    Cube::initializeMesh();
+    std::vector<std::unique_ptr<Object>> objects;
 }
 
 void spawnCube(const glm::vec3 &position)
 {
-    cubes.emplace_back(position);
+    objects.push_back(std::make_unique<Cube>(position));
 }
 
-void drawCubes(unsigned int shaderProgram)
+void drawObjects(unsigned int shaderProgram)
 {
-    for (const Cube &cube : cubes)
+    for (const auto &object : objects)
     {
-        cube.drawObject(shaderProgram);
+        object->drawObject(shaderProgram);
     }
 }
 
-void updateCubes(float deltaTime)
+void updateObject(float deltaTime)
 {
-    for (Cube &cube : cubes)
+    for (const auto &object : objects)
     {
-        cube.update(deltaTime);
+        object->update(deltaTime);
     }
 }
 
-void cleanupCubes()
+void cleanupObjects()
 {
-    cubes.clear();
-    Cube::cleanupMesh();
+    objects.clear();
 }
 
-void listCubes()
+void listObjects()
 {
-    std::cout << "Cube Total: " << cubes.size() << '\n';
+    std::cout << "Cube Total: " << objects.size() << '\n';
 
-    for (std::size_t i = 0; i < cubes.size(); ++i)
+    for (std::size_t i = 0; i < objects.size(); ++i)
     {
-        const glm::vec3 &p = cubes[i].getPosition();
+        const glm::vec3 &p = objects[i]->getPosition();
 
         std::cout << "Cube #" << i + 1 << ": ("
                   << p.x << ", "

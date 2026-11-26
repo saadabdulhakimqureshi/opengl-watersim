@@ -2,9 +2,11 @@
 
 #include <glm/glm.hpp>
 
-void initializeCubes();
+// mesh specific spawning
 void spawnCube(const glm::vec3 &position);
-void drawCubes(unsigned int shaderProgram);
-void cleanupCubes();
-void listCubes();
-void updateCubes(float deltaTime);
+
+// base object class
+void drawObjects(unsigned int shaderProgram);
+void cleanupObjects();
+void listObjects();
+void updateObjects(float deltaTime);
