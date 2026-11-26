@@ -67,9 +67,41 @@ void Object::drawObject(unsigned int shaderProgram) const
 
 void Object::update(float deltaTime, glm::vec3 g)
 {
-    acceleration = mass * g * deltaTime;
-    position += velocity * deltaTime - acceleration * deltaTime;
-    velocity -= acceleration;
+    acceleration = g;
+
+    position += velocity * deltaTime + 0.5f * acceleration * deltaTime * deltaTime;
+
+    velocity += acceleration * deltaTime;
+}
+
+void Object::applyForce(glm::vec3 force, float deltaTime)
+{
+    velocity += force / mass;
+}
+void Object::applyForce(glm::vec3 direction, float magnitude, float deltaTime)
+{
+    applyForce(direction * magnitude, deltaTime);
+}
+
+void Object::applyAcceleration(glm::vec3 acceleration)
+{
+    acceleration += acceleration;
+}
+void Object::applyAcceleration(glm::vec3 direction, float magnitude)
+{
+    applyAcceleration(direction * magnitude);
+}
+
+void Object::transferEnergy(float joules)
+{
+    if (joules == 0)
+    {
+        return;
+    }
+
+    float deltaV = sqrt(2 * abs(joules) / mass);
+
+    velocity += joules > 0 ? deltaV : deltaV;
 }
 
 void Object::cleanupMesh()

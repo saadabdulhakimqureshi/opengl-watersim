@@ -1,5 +1,4 @@
 #include "environment.h"
-#include "cube.h"
 
 #include <iostream>
 #include <memory>
@@ -9,12 +8,17 @@ namespace
 {
     std::vector<std::unique_ptr<Object>> objects;
 
-    glm::vec3 gravity{0, 9.81, 0};
+    glm::vec3 gravity{0.0f, -9.81f, 0.0f};
 }
 
-void spawnCube(const glm::vec3 &position)
+Cube *spawnCube(const glm::vec3 &position)
 {
-    objects.push_back(std::make_unique<Cube>(position));
+    auto cube = std::make_unique<Cube>(position);
+    Cube *result = cube.get();
+
+    objects.push_back(std::move(cube));
+
+    return result;
 }
 
 void drawObjects(unsigned int shaderProgram)
@@ -51,4 +55,9 @@ void listObjects()
                   << p.y << ", "
                   << p.z << ")\n";
     }
+}
+
+void applyForceToObject(Object &object, glm::vec3 force, float magnitude, float deltaTime)
+{
+    object.applyForce(force, magnitude, deltaTime);
 }

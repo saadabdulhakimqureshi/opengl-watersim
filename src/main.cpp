@@ -315,6 +315,13 @@ void processInput(GLFWwindow *window, Camera &camera, float deltaTime, glm::vec3
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
 
+	// force
+	if (glfwGetKey(window, GLFW_KEY_F))
+	{
+		Cube *cube = spawnCube(camera.getPosition() + camera.getForward() * 1.0f);
+		applyForceToObject(*cube, camera.getForward(), 1.0f, deltaTime);
+	}
+
 	// camera movement
 	// walking around
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)

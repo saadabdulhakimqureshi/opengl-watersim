@@ -15,7 +15,14 @@ public:
     void cleanupMesh();
 
     virtual void drawObject(unsigned int shaderProgram) const;
+
+    // rigidbody
     virtual void update(float deltaTime, glm::vec3 g);
+    virtual void applyForce(glm::vec3 force, float deltaTime);
+    virtual void applyForce(glm::vec3 direction, float magnitude, float deltaTime);
+    virtual void applyAcceleration(glm::vec3 acceleration);
+    virtual void applyAcceleration(glm::vec3 direction, float magnitude);
+    virtual void transferEnergy(float joulses);
 
     const glm::vec3 &getPosition() const
     {
@@ -25,6 +32,16 @@ public:
     const glm::vec3 &getVelocity() const
     {
         return velocity;
+    }
+
+    const glm::vec3 &getAcceleration() const
+    {
+        return acceleration;
+    }
+
+    const glm::float32 &getMass() const
+    {
+        return mass;
     }
 
 protected:
@@ -42,7 +59,7 @@ protected:
     // rigid body
     glm::vec3 velocity{0.0f};
     glm::vec3 acceleration{0.0f};
-    glm::float32 mass{1};
+    glm::float32 mass{0.1};
 
 private:
     unsigned int VAO = 0;
